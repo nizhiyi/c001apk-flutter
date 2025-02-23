@@ -1,58 +1,64 @@
-name: Test Release
+name: c001apk Release
+
+# action事件触发
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '.github/**'
+      - '.idea/**'
+      - '!.github/workflows/**'
 
+# 可以有多个jobs
 jobs:
-  build:
+  android:
+    # 运行环境 ubuntu-latest window-latest mac-latest
     runs-on: ubuntu-latest
-    steps:
-      - name: Get the source
-        uses: actions/checkout@v4.2.2
 
-      - name: Set up JDK 17
+    # 每个jobs中可以有多个steps
+    steps:
+      - name: 代码迁出
+        uses: actions/checkout@v3
+
+      - name: 构建Java环境
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "zulu"
+          java-version: "17"
+          token: ${{secrets.GIT_TOKEN}}
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4.2.1
+      - name: 检查缓存
+        uses: actions/cache@v2
+        id: cache-flutter
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+          path: /root/flutter-sdk # Flutter SDK 的路径
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
 
-      - name: Generate Release APK
-        run: ./gradlew assembleRelease
+      - name: 安装Flutter
+        if: steps.cache-flutter.outputs.cache-hit != 'true'
+        uses: subosito/flutter-action@v2
 
-      - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
+      - name: 下载项目依赖
+        run: flutter pub get
+
+      - name: 解码生成 jks
+        run: echo $KEYSTORE_BASE64 | base64 -di > android/app/vvex.jks
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+      - name: flutter build apk
+        run: flutter build apk --release --split-per-abi
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD}}
+          
+      - name: Upload release
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.KEYSTORE_FILE }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-      - name: Install curl
-        run: sudo apt-get install -y curl
-
-      - name: Upload APK to Telegram
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-          -F chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-          -F document=@${{ steps.sign_app.outputs.signedReleaseFile }}
+          name: app-release
+          path: "build/app/outputs/flutter-apk/*.apk"
