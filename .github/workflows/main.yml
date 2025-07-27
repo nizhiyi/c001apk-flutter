@@ -41,7 +41,7 @@ jobs:
         if: steps.cache-flutter.outputs.cache-hit != 'true'
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.24.5'
           
       - name: 下载项目依赖
         run: flutter pub get
