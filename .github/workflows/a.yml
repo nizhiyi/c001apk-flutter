@@ -40,7 +40,6 @@ jobs:
         run: |
           version_name=$(yq e .version pubspec.yaml | cut -d "+" -f 1)
           sed -i "s/version: .*/version: $version_name-$(git rev-parse --short HEAD)+$(git rev-list --count HEAD)/g" pubspec.yaml
-
       - name: Write key
         run: |
           if [ ! -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
@@ -50,27 +49,23 @@ jobs:
             echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
             echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
           fi
-
       - name: flutter build apk
         run: |
           chmod +x lib/scripts/build.sh
           lib/scripts/build.sh
           flutter build apk --release --split-per-abi
-
       - name: 上传
         uses: actions/upload-artifact@v4
         with:
           name: app-arm64-v8a
           path: |
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-
       - name: 上传
         uses: actions/upload-artifact@v4
         with:
           name: app-armeabi-v7a
           path: |
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-
       - name: 上传
         uses: actions/upload-artifact@v4
         with:
