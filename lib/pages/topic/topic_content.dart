@@ -99,7 +99,6 @@ class _TopicContentState extends State<TopicContent>
           _topicController.onGetData();
         }
       });
-      _topicOrderController?.topicSortType.refresh();
     }
   }
 
