@@ -39,7 +39,9 @@ class _TopicContentState extends State<TopicContent>
 
   late final _topicController = Get.put(
     TopicContentController(
-      url: widget.url,
+      url: widget.title == '讨论'
+        ? '/page?url=/product/feedList?type=feed&id=${widget.id}&ignoreEntityById=1&listType=dateline_desc'
+        : widget.url,
       title: widget.title,
     ),
     tag: widget.url + widget.title + widget.random,
