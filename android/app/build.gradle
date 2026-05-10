@@ -47,6 +47,7 @@ android {
             isUniversalApk = false
         }
     }
+    
     signingConfigs {
         if(_storeFile != null) {
             release {
