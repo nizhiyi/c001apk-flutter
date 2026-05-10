@@ -74,9 +74,6 @@ class _TopicContentState extends State<TopicContent>
     if (widget.entityType == 'product' && widget.title == '讨论') {
       _topicOrderController = Get.find<TopicOrderController>(
           tag: (widget.tag ?? widget.id!) + widget.random);
-      _topicController = CommonController(
-    url: '/page?url=/product/feedList?type=feed&id=${widget.id}&ignoreEntityById=1&listType=dateline_desc',
-    id: widget.id,);
       _topicOrderController?.topicSortType.listen((type) {
         _topicController.url =
             '/page?url=/product/feedList?type=feed&id=${widget.id}&';
@@ -102,6 +99,7 @@ class _TopicContentState extends State<TopicContent>
           _topicController.onGetData();
         }
       });
+      _topicOrderController?.topicSortType.refresh();
     }
   }
 
