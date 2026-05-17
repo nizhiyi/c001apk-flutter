@@ -47,7 +47,7 @@ jobs:
         run: flutter pub get
 
       - name: flutter build apk
-        run: flutter build apk --release --target-platform=android-arm64
+        run: flutter build apk --release  --split-per-abi  --target-platform=android-arm64
 
       - name: Sign APK
         uses: r0adkll/sign-android-release@v1
