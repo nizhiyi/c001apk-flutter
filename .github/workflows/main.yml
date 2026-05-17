@@ -66,4 +66,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: "build/app/outputs/flutter-apk/*.apk"
+          path: "build/app/outputs/flutter-apk/*-signed.apk"
